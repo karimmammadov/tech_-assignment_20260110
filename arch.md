@@ -619,22 +619,17 @@ graph TB
         subgraph "VPC - 10.0.0.0/16"
             subgraph "Public Subnets - Multi-AZ"
                 ALB[Application Load Balancer]
-                NAT1[NAT Gateway AZ1]
-                NAT2[NAT Gateway AZ2]
-                NAT3[NAT Gateway AZ3]
+                NAT[NAT Gateways AZs]
             end
 
             subgraph "Private App Subnets - Multi-AZ"
                 subgraph "EKS Cluster"
                     subgraph "Backend Namespace"
-                        BE1[Flask Pod 1]
-                        BE2[Flask Pod 2]
-                        BE3[Flask Pod N]
+                        BE[Flask Pods]
                     end
 
                     subgraph "Frontend Namespace"
-                        FE1[React/Nginx Pod 1]
-                        FE2[React/Nginx Pod 2]
+                        FE[React/Nginx Pods]
                     end
 
                     subgraph "System Namespace"
@@ -680,45 +675,35 @@ graph TB
     WAF -->|Forward| ALB
 
     %% Load Balancer Routing
-    ALB -->|/api/*| BE1
-    ALB -->|/api/*| BE2
-    ALB -->|/api/*| BE3
-    ALB -->|/*| FE1
-    ALB -->|/*| FE2
+    ALB -->|/api/*| BE
+    ALB -->|/*| FE
 
     %% Backend to Database
-    BE1 -.->|Read/Write| RDS
-    BE2 -.->|Read/Write| RDS
-    BE3 -.->|Read/Write| RDS
-    BE1 -.->|Read Only| RR
-    BE2 -.->|Read Only| RR
+    BE -.->|Read/Write| RDS
+    BE -.->|Read Only| RR
 
     %% EKS Egress
-    BE1 -->|Internet| NAT1
-    BE2 -->|Internet| NAT2
-    DNS -->|DNS| NAT1
+    BE -->|Internet| NAT
+    DNS -->|DNS| NAT
 
     %% Security & Secrets
-    BE1 -.->|Fetch Secrets| SM
-    BE2 -.->|Fetch Secrets| SM
+    BE -.->|Fetch Secrets| SM
     SM -.->|Encryption Keys| KMS
     RDS -.->|Encryption| KMS
 
     %% Monitoring
-    BE1 -.->|Logs & Metrics| CW
-    BE2 -.->|Logs & Metrics| CW
-    FE1 -.->|Logs| CW
+    BE -.->|Logs & Metrics| CW
+    FE -.->|Logs| CW
     ALB -.->|Logs| CW
     RDS -.->|Metrics| CW
-    BE1 -.->|Traces| XR
+    BE -.->|Traces| XR
 
     %% CI/CD Flow
     GIT -->|Trigger| CI
     CI -->|Build & Push| ECR
     CI -->|Update Manifest| ARGO
-    ARGO -->|Deploy| BE1
-    ARGO -->|Deploy| BE2
-    ARGO -->|Deploy| FE1
+    ARGO -->|Deploy| BE
+    ARGO -->|Deploy| FE
 
     %% Security Monitoring
     GD -.->|Threat Detection| CW
@@ -732,7 +717,6 @@ graph TB
     style ECR fill:#99cc99
     style CW fill:#ffcc99
     style KMS fill:#cc99ff
-    style EKS Cluster fill:#e6f3ff
 ```
 
 ---
